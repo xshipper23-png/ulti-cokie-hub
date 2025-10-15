@@ -497,7 +497,7 @@ applyJump()
    end,
 })
 
-local Section = Tab:CreateSection("give weopens")
+local Section = combatTab:CreateSection("give weopens")
 
 local Button = combatTab:CreateButton({
    Name = "get pistol",
@@ -654,7 +654,7 @@ print(string.format("Teleportiert zu: X=%.1f, Y=%.1f, Z=%.1f", TARGET.X, TARGET.
    end,
 })
 
-local Section = Tab:CreateSection("open world tps ")
+local Section = tpTab:CreateSection("open world tps ")
 
 local Button = tpTab:CreateButton({
    Name = "prison front",
