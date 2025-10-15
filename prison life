@@ -37,7 +37,7 @@ local Window = Rayfield:CreateWindow({
    }
 })
 
-local cambatTab = Window:CreateTab("combat", nil) -- Title, Image
+local combatTab = Window:CreateTab("combat", nil) -- Title, Image
 local PLTab = Window:CreateTab("player", nil) -- Title, Image
 local tpTab = Window:CreateTab("teleport", nil) -- Title, Image
 
