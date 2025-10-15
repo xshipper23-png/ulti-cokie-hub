@@ -1,0 +1,729 @@
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+   Name = "prison life",
+   Icon = 0, -- Icon in Topbar. Can use Lucide Icons (string) or Roblox Image (number). 0 to use no icon (default).
+   LoadingTitle = "Rayfield Interface Suite",
+   LoadingSubtitle = "by Sirius",
+   ShowText = "Rayfield", -- for mobile users to unhide rayfield, change if you'd like
+   Theme = "Default", -- Check https://docs.sirius.menu/rayfield/configuration/themes
+
+   ToggleUIKeybind = "g", -- The keybind to toggle the UI visibility (string like "K" or Enum.KeyCode)
+
+   DisableRayfieldPrompts = true,
+   DisableBuildWarnings = false, -- Prevents Rayfield from warning when the script has a version mismatch with the interface
+
+   ConfigurationSaving = {
+      Enabled = false,
+      FolderName = nil, -- Create a custom folder for your hub/game
+      FileName = "Big Hub"
+   },
+
+   Discord = {
+      Enabled = false, -- Prompt the user to join your Discord server if their executor supports it
+      Invite = "noinvitelink", -- The Discord invite code, do not include discord.gg/. E.g. discord.gg/ ABCD would be ABCD
+      RememberJoins = true -- Set this to false to make them join the discord every time they load it up
+   },
+
+   KeySystem = false, -- Set this to true to use our key system
+   KeySettings = {
+      Title = "Untitled",
+      Subtitle = "Key System",
+      Note = "No method of obtaining the key is provided", -- Use this to tell the user how to get a key
+      FileName = "Key", -- It is recommended to use something unique as other scripts using Rayfield may overwrite your key file
+      SaveKey = true, -- The user's key will be saved, but if you change the key, they will be unable to use your script
+      GrabKeyFromSite = false, -- If this is true, set Key below to the RAW site you would like Rayfield to get the key from
+      Key = {"Hello"} -- List of keys that will be accepted by the system, can be RAW file links (pastebin, github etc) or simple strings ("hello","key22")
+   }
+})
+
+local cambatTab = Window:CreateTab("combat", nil) -- Title, Image
+local PLTab = Window:CreateTab("player", nil) -- Title, Image
+local tpTab = Window:CreateTab("teleport", nil) -- Title, Image
+
+local Toggle = PLTab:CreateToggle({
+   Name = "INFINIT JUMP",
+   CurrentValue = false,
+   Flag = "Toggle1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Callback = function(infijump)
+-- GLOBAL BOOLEAN zur Steuerung
+if _G.InfiniteJumpEnabled == nil then
+    _G.InfiniteJumpEnabled = true -- erstes Mal starten → aktiv
+else
+    _G.InfiniteJumpEnabled = not _G.InfiniteJumpEnabled -- beim erneuten Starten → Toggle
+end
+
+print("[DEBUG] Infinite Jump Status:", _G.InfiniteJumpEnabled)
+
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local player = Players.LocalPlayer
+
+-- Verbindung, die nur einmal erstellt wird
+if not _G._InfiniteJumpConnection then
+    _G._InfiniteJumpConnection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if gameProcessed then return end
+        if input.KeyCode == Enum.KeyCode.Space and _G.InfiniteJumpEnabled then
+            local character = player.Character
+            if not character then return end
+            local humanoid = character:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+            end
+        end
+    end)
+end
+
+   end,
+})
+
+local Toggle = combatTab:CreateToggle({
+   Name = "AIMBOT",
+   CurrentValue = false,
+   Flag = "Toggle2", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Callback = function(e)
+  -- Aimbot Toggle Script
+-- LocalScript (StarterPlayerScripts)
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local workspace = game:GetService("Workspace")
+
+local localPlayer = Players.LocalPlayer
+local camera = workspace.CurrentCamera
+
+-- Toggle: beim ersten Start true, beim erneuten Start umkehren
+if _G.AimBotEnabled == nil then
+    _G.AimBotEnabled = true
+else
+    _G.AimBotEnabled = not _G.AimBotEnabled
+end
+
+print("[AIMBOT] Status:", _G.AimBotEnabled and "ON" or "OFF")
+
+-- Einstellungen (kannst du anpassen)
+local MAX_DISTANCE = 300      -- maximale Zielentfernung
+local FOV_DEGREES = 80        -- Sichtfeld (größer = mehr Ziele)
+local SMOOTHING = 0.35        -- 0 = instant, 1 = keine Bewegung (0..1), z.B. 0.35 = weich
+local AIM_PART = "Head"       -- Zielteil am Gegner (z. B. "Head" oder "UpperTorso")
+
+-- Hilfsfunktion: findet bestes Ziel
+local function findBestTarget()
+    if not camera or not localPlayer.Character then return nil end
+    local camPos = camera.CFrame.Position
+    local bestPlayer, bestPart, bestScore = nil, nil, -1
+    local fovCos = math.cos(math.rad(FOV_DEGREES))
+
+    for _, pl in ipairs(Players:GetPlayers()) do
+        if pl ~= localPlayer and pl.Character and pl.Character.Parent then
+            local humanoid = pl.Character:FindFirstChildOfClass("Humanoid")
+            if humanoid and humanoid.Health > 0 then
+                local part = pl.Character:FindFirstChild(AIM_PART) or pl.Character:FindFirstChild("HumanoidRootPart")
+                if part and part:IsA("BasePart") then
+                    local dir = (part.Position - camPos)
+                    local dist = dir.Magnitude
+                    if dist <= MAX_DISTANCE then
+                        local dirUnit = dir.Unit
+                        local forward = camera.CFrame.LookVector
+                        local dot = forward:Dot(dirUnit)
+                        if dot > fovCos then
+                            -- Score kann Kombination aus dot (Ausrichtung) und inverse Distanz sein
+                            local score = dot - (dist / (MAX_DISTANCE*2))
+                            if score > bestScore then
+                                bestScore = score
+                                bestPlayer = pl
+                                bestPart = part
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    return bestPlayer, bestPart
+end
+
+-- Verbindung managen
+if _G._AimBotConnection then
+    -- Falls schon eine Verbindung existiert (aus vorherigem Lauf), trennen wir sie zuerst
+    pcall(function() _G._AimBotConnection:Disconnect() end)
+    _G._AimBotConnection = nil
+end
+
+if _G.AimBotEnabled then
+    _G._AimBotConnection = RunService.RenderStepped:Connect(function()
+        -- Sicherheitschecks
+        if not camera then camera = workspace.CurrentCamera; if not camera then return end end
+        if not localPlayer or not localPlayer.Character then return end
+
+        local _, targetPart = findBestTarget()
+        if targetPart then
+            local camPos = camera.CFrame.Position
+            local targetPos = targetPart.Position
+            -- berechne gewünschtes CFrame, das von Kamera-Position auf target schaut
+            local desiredCFrame = CFrame.new(camPos, targetPos)
+            -- Smooth Lerp der Kamera-Rotation (Position bleibt gleich)
+            camera.CFrame = camera.CFrame:Lerp(desiredCFrame, SMOOTHING)
+        end
+    end)
+else
+    print("[AIMBOT] Deactivated, no connection left.")
+end
+
+   end,
+})
+
+local Toggle = combatTab:CreateToggle({
+   Name = "ESP name ",
+   CurrentValue = false,
+   Flag = "Toggle3", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Callback = function(e)
+-- ESP Name Toggle Script
+
+local Players = game:GetService("Players")
+local localPlayer = Players.LocalPlayer
+
+-- Toggle Status merken
+if _G.ESPNameEnabled == nil then
+    _G.ESPNameEnabled = true
+else
+    _G.ESPNameEnabled = not _G.ESPNameEnabled
+end
+
+print("[ESP NAME] Status:", _G.ESPNameEnabled and "ON" or "OFF")
+
+-- Speicher für alle Nametags
+_G._ESPNametags = _G._ESPNametags or {}
+
+-- Nametag erstellen
+local function createNametag(player)
+    if player == localPlayer then return end
+    if not player.Character then return end
+    if _G._ESPNametags[player] and _G._ESPNametags[player].Parent then return end
+
+    local head = player.Character:FindFirstChild("Head")
+    if not head then return end
+
+    local billboard = Instance.new("BillboardGui")
+    billboard.Name = "ESP_Name"
+    billboard.Size = UDim2.new(0, 100, 0, 30)
+    billboard.Adornee = head
+    billboard.AlwaysOnTop = true
+    billboard.StudsOffset = Vector3.new(0, 2, 0)
+
+    local text = Instance.new("TextLabel", billboard)
+    text.Size = UDim2.new(1, 0, 1, 0)
+    text.Text = player.Name
+    text.BackgroundTransparency = 1
+    text.TextColor3 = Color3.fromRGB(255, 255, 255)
+    text.TextStrokeTransparency = 0
+    text.Font = Enum.Font.SourceSansBold
+    text.TextScaled = true
+
+    billboard.Parent = head
+    _G._ESPNametags[player] = billboard
+end
+
+-- Nametag löschen
+local function removeNametag(player)
+    if _G._ESPNametags[player] then
+        _G._ESPNametags[player]:Destroy()
+        _G._ESPNametags[player] = nil
+    end
+end
+
+-- Aktivieren
+if _G.ESPNameEnabled then
+    for _, pl in ipairs(Players:GetPlayers()) do
+        if pl ~= localPlayer then
+            createNametag(pl)
+        end
+    end
+
+    if not _G._ESP_Name_PlayerAddedConn then
+        _G._ESP_Name_PlayerAddedConn = Players.PlayerAdded:Connect(function(pl)
+            pl.CharacterAdded:Connect(function()
+                if _G.ESPNameEnabled then
+                    createNametag(pl)
+                end
+            end)
+        end)
+    end
+
+    print("[ESP NAME] Activated.")
+
+-- Deaktivieren → alles entfernen
+else
+    for _, pl in pairs(_G._ESPNametags) do
+        if pl and pl.Parent then
+            pl:Destroy()
+        end
+    end
+    _G._ESPNametags = {}
+    print("[ESP NAME] Deactivated and cleaned up.")
+end
+
+   end,
+})
+
+local Toggle = combatTab:CreateToggle({
+   Name = "ESP BODY",
+   CurrentValue = false,
+   Flag = "e", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Callback = function(e)
+  -- ESP Highlight Toggle Script
+
+local Players = game:GetService("Players")
+local localPlayer = Players.LocalPlayer
+
+-- Toggle Status merken
+if _G.ESPHighlightEnabled == nil then
+    _G.ESPHighlightEnabled = true
+else
+    _G.ESPHighlightEnabled = not _G.ESPHighlightEnabled
+end
+
+print("[ESP HIGHLIGHT] Status:", _G.ESPHighlightEnabled and "ON" or "OFF")
+
+-- Speichert alle Highlights, damit wir sie entfernen können
+_G._ESPHighlights = _G._ESPHighlights or {}
+
+-- Funktion, die Highlight für einen Spieler erstellt
+local function createHighlightForCharacter(player)
+    if player == localPlayer then return end
+    if not player.Character then return end
+    if _G._ESPHighlights[player] and _G._ESPHighlights[player].Parent then return end
+
+    local highlight = Instance.new("Highlight")
+    highlight.Name = "ESP_Highlight"
+    highlight.Adornee = player.Character
+    highlight.FillColor = Color3.fromRGB(255, 50, 50) -- Rot (anpassbar)
+    highlight.OutlineColor = Color3.fromRGB(255, 255, 255) -- Weiß
+    highlight.FillTransparency = 0.5
+    highlight.OutlineTransparency = 0
+    highlight.Parent = player.Character
+
+    _G._ESPHighlights[player] = highlight
+end
+
+-- Funktion, die Highlight entfernt
+local function removeHighlightForPlayer(player)
+    if _G._ESPHighlights[player] then
+        _G._ESPHighlights[player]:Destroy()
+        _G._ESPHighlights[player] = nil
+    end
+end
+
+-- Wenn aktiv → Highlights erstellen
+if _G.ESPHighlightEnabled then
+    for _, pl in ipairs(Players:GetPlayers()) do
+        if pl ~= localPlayer and pl.Character then
+            createHighlightForCharacter(pl)
+        end
+    end
+
+    -- Player joins
+    if not _G._ESP_Highlight_PlayerAddedConn then
+        _G._ESP_Highlight_PlayerAddedConn = Players.PlayerAdded:Connect(function(pl)
+            pl.CharacterAdded:Connect(function()
+                if _G.ESPHighlightEnabled then
+                    createHighlightForCharacter(pl)
+                end
+            end)
+        end)
+    end
+
+    -- Charakterwechsel für existierende Spieler
+    if not _G._ESP_Highlight_CharAddedConn then
+        _G._ESP_Highlight_CharAddedConn = {}
+    end
+    for _, pl in ipairs(Players:GetPlayers()) do
+        if pl ~= localPlayer and not _G._ESP_Highlight_CharAddedConn[pl] then
+            _G._ESP_Highlight_CharAddedConn[pl] = pl.CharacterAdded:Connect(function()
+                if _G.ESPHighlightEnabled then
+                    createHighlightForCharacter(pl)
+                end
+            end)
+        end
+    end
+
+    print("[ESP HIGHLIGHT] Activated.")
+
+-- Wenn deaktiviert → alles aufräumen
+else
+    for _, pl in ipairs(Players:GetPlayers()) do
+        removeHighlightForPlayer(pl)
+    end
+    print("[ESP HIGHLIGHT] Deactivated and cleaned up.")
+end
+
+   end,
+})
+
+local Slider = PLTab:CreateSlider({
+   Name = "speed",
+   Range = {10, 300},
+   Increment = 1,
+   Suffix = " ",
+   CurrentValue = 16,
+   Flag = "Slider1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Callback = function(speed)
+-- Optimiertes Live-Speed Script (kein Spam)
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
+
+local lastSpeed -- merkt sich den alten Wert
+
+-- Funktion: liest aktuellen speed-Wert
+local function getSpeed()
+    if typeof(speed) == "function" then
+        return speed()
+    elseif typeof(speed) == "Instance" and speed:IsA("NumberValue") then
+        return speed.Value
+    else
+        return speed
+    end
+end
+
+-- Funktion: setzt Geschwindigkeit nur wenn nötig
+local function applySpeed()
+    local character = player.Character
+    if not character then return end
+
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if not humanoid then return end
+
+    local newSpeed = getSpeed()
+    if newSpeed ~= lastSpeed then
+        humanoid.WalkSpeed = newSpeed
+        print("[SPEED] WalkSpeed geändert auf:", newSpeed)
+        lastSpeed = newSpeed
+    end
+end
+
+-- Beim Respawn neu setzen
+player.CharacterAdded:Connect(function()
+    player.Character:WaitForChild("Humanoid")
+    lastSpeed = nil
+    applySpeed()
+end)
+
+-- Wenn speed ein NumberValue ist → live zuhören
+if typeof(speed) == "Instance" and speed:IsA("NumberValue") then
+    speed:GetPropertyChangedSignal("Value"):Connect(function()
+        applySpeed()
+    end)
+end
+
+-- Nur ca. 5x pro Sekunde prüfen (schont CPU)
+RunService.Stepped:Connect(function(_, step)
+    applySpeed()
+end)
+
+-- Anfang
+applySpeed()
+
+   end,
+})
+
+local Slider = PLTab:CreateSlider({
+   Name = "jump BOST",
+   Range = {0, 250},
+   Increment = 10,
+   Suffix = " ",
+   CurrentValue = 25,
+   Flag = "Slider1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Callback = function(jumpb)
+  -- Optimiertes Live-Jump Script (Variable/Funktion/NumberValue "jumpb")
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
+
+local lastJump -- merkt sich den alten Wert
+
+-- Funktion: liest aktuellen jumpb-Wert
+local function getJump()
+    if typeof(jumpb) == "function" then
+        return jumpb()
+    elseif typeof(jumpb) == "Instance" and jumpb:IsA("NumberValue") then
+        return jumpb.Value
+    else
+        return jumpb
+    end
+end
+
+-- Funktion: setzt JumpPower nur wenn nötig
+local function applyJump()
+    local character = player.Character
+    if not character then return end
+
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if not humanoid then return end
+
+    local newJump = getJump()
+    if newJump ~= lastJump then
+        humanoid.UseJumpPower = true -- sicherstellen, dass JumpPower benutzt wird
+        humanoid.JumpPower = newJump
+        print("[JUMP] JumpPower geändert auf:", newJump)
+        lastJump = newJump
+    end
+end
+
+-- Beim Respawn neu setzen
+player.CharacterAdded:Connect(function()
+    player.Character:WaitForChild("Humanoid")
+    lastJump = nil
+    applyJump()
+end)
+
+-- Wenn jumpb ein NumberValue ist → live zuhören
+if typeof(jumpb) == "Instance" and jumpb:IsA("NumberValue") then
+    jumpb:GetPropertyChangedSignal("Value"):Connect(function()
+        applyJump()
+    end)
+end
+
+-- Alle paar Frames prüfen (nicht spammen)
+RunService.Stepped:Connect(function()
+    applyJump()
+end)
+
+-- Anfang
+applyJump()
+
+   end,
+})
+
+local Section = Tab:CreateSection("give weopens")
+
+local Button = combatTab:CreateButton({
+   Name = "get pistol",
+   Callback = function()
+  -- LocalScript – Teleportiere dich zu festen Koordinaten und zurück
+-- ⚠ Nur clientseitig (funktioniert in Studio oder LocalSimulation)
+-- Ersetze die Werte in TARGET durch deine gewünschten Koordinaten.
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local hrp = character:WaitForChild("HumanoidRootPart")
+
+-- === HIER DEINE ZIEL-KOORDINATEN EINTRAGEN ===
+local TARGET = Vector3.new(814, 101, 2217) -- <--- DEINE KOORDINATEN
+-- ==============================================
+
+-- Position merken, wo Skript gestartet wurde
+local originalCFrame = hrp.CFrame
+
+-- Teleportiere zum Ziel
+hrp.CFrame = CFrame.new(TARGET)
+print(string.format("Teleportiert zu: X=%.1f, Y=%.1f, Z=%.1f", TARGET.X, TARGET.Y, TARGET.Z))
+
+-- 1.5 Sekunden warten
+task.wait(0.5)
+
+-- Zurück teleportieren
+if hrp and hrp.Parent then
+	hrp.CFrame = originalCFrame
+	print("Zurück zur Ausgangsposition teleportiert.")
+end
+
+   end,
+})
+
+local Button = combatTab:CreateButton({
+   Name = "get pump",
+   Callback = function()
+  -- LocalScript – Teleportiere dich zu festen Koordinaten und zurück
+-- ⚠ Nur clientseitig (funktioniert in Studio oder LocalSimulation)
+-- Ersetze die Werte in TARGET durch deine gewünschten Koordinaten.
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local hrp = character:WaitForChild("HumanoidRootPart")
+
+-- === HIER DEINE ZIEL-KOORDINATEN EINTRAGEN ===
+local TARGET = Vector3.new(821, 101, 2217) -- <--- DEINE KOORDINATEN
+-- ==============================================
+
+-- Position merken, wo Skript gestartet wurde
+local originalCFrame = hrp.CFrame
+
+-- Teleportiere zum Ziel
+hrp.CFrame = CFrame.new(TARGET)
+print(string.format("Teleportiert zu: X=%.1f, Y=%.1f, Z=%.1f", TARGET.X, TARGET.Y, TARGET.Z))
+
+-- 1.5 Sekunden warten
+task.wait(0.5)
+
+-- Zurück teleportieren
+if hrp and hrp.Parent then
+	hrp.CFrame = originalCFrame
+	print("Zurück zur Ausgangsposition teleportiert.")
+end
+
+   end,
+})
+
+local Button = combatTab:CreateButton({
+   Name = "get AK-47",
+   Callback = function()
+  -- LocalScript – Teleportiere dich zu festen Koordinaten und zurück
+-- ⚠ Nur clientseitig (funktioniert in Studio oder LocalSimulation)
+-- Ersetze die Werte in TARGET durch deine gewünschten Koordinaten.
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local hrp = character:WaitForChild("HumanoidRootPart")
+
+-- === HIER DEINE ZIEL-KOORDINATEN EINTRAGEN ===
+local TARGET = Vector3.new(-937, 94, 2050) -- <--- DEINE KOORDINATEN
+-- ==============================================
+
+-- Position merken, wo Skript gestartet wurde
+local originalCFrame = hrp.CFrame
+
+-- Teleportiere zum Ziel
+hrp.CFrame = CFrame.new(TARGET)
+print(string.format("Teleportiert zu: X=%.1f, Y=%.1f, Z=%.1f", TARGET.X, TARGET.Y, TARGET.Z))
+
+-- 1.5 Sekunden warten
+task.wait(0.5)
+
+-- Zurück teleportieren
+if hrp and hrp.Parent then
+	hrp.CFrame = originalCFrame
+	print("Zurück zur Ausgangsposition teleportiert.")
+end
+
+   end,
+})
+
+local Section = tpTab:CreateSection("in prison tps")
+
+local Button = tpTab:CreateButton({
+   Name = "roof",
+   Callback = function()
+   -- LocalScript – Teleportiere dich zu festen Koordinaten (ohne Rück-Teleport)
+-- Füge das Skript unter StarterPlayer → StarterPlayerScripts ein.
+-- ⚠ Nur clientseitig, funktioniert im Play-Test in Roblox Studio.
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local hrp = character:WaitForChild("HumanoidRootPart")
+
+-- === HIER DEINE ZIEL-KOORDINATEN EINTRAGEN ===
+local TARGET = Vector3.new(915, 150, 2286) -- <--- DEINE KOORDINATEN HIER
+-- ==============================================
+
+-- Teleportiere zum Ziel
+hrp.CFrame = CFrame.new(TARGET)
+
+print(string.format("Teleportiert zu: X=%.1f, Y=%.1f, Z=%.1f", TARGET.X, TARGET.Y, TARGET.Z))
+
+   end,
+})
+
+local Button = tpTab:CreateButton({
+   Name = "weopen room police",
+   Callback = function()
+   -- LocalScript – Teleportiere dich zu festen Koordinaten (ohne Rück-Teleport)
+-- Füge das Skript unter StarterPlayer → StarterPlayerScripts ein.
+-- ⚠ Nur clientseitig, funktioniert im Play-Test in Roblox Studio.
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local hrp = character:WaitForChild("HumanoidRootPart")
+
+-- === HIER DEINE ZIEL-KOORDINATEN EINTRAGEN ===
+local TARGET = Vector3.new(848, 103, 2244) -- <--- DEINE KOORDINATEN HIER
+-- ==============================================
+
+-- Teleportiere zum Ziel
+hrp.CFrame = CFrame.new(TARGET)
+
+print(string.format("Teleportiert zu: X=%.1f, Y=%.1f, Z=%.1f", TARGET.X, TARGET.Y, TARGET.Z))
+
+   end,
+})
+
+local Section = Tab:CreateSection("open world tps ")
+
+local Button = tpTab:CreateButton({
+   Name = "prison front",
+   Callback = function()
+   -- LocalScript – Teleportiere dich zu festen Koordinaten (ohne Rück-Teleport)
+-- Füge das Skript unter StarterPlayer → StarterPlayerScripts ein.
+-- ⚠ Nur clientseitig, funktioniert im Play-Test in Roblox Studio.
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local hrp = character:WaitForChild("HumanoidRootPart")
+
+-- === HIER DEINE ZIEL-KOORDINATEN EINTRAGEN ===
+local TARGET = Vector3.new(484, 100, 2244) -- <--- DEINE KOORDINATEN HIER
+-- ==============================================
+
+-- Teleportiere zum Ziel
+hrp.CFrame = CFrame.new(TARGET)
+
+print(string.format("Teleportiert zu: X=%.1f, Y=%.1f, Z=%.1f", TARGET.X, TARGET.Y, TARGET.Z))
+
+   end,
+})
+
+local Button = tpTab:CreateButton({
+   Name = "on prison wall",
+   Callback = function()
+   -- LocalScript – Teleportiere dich zu festen Koordinaten (ohne Rück-Teleport)
+-- Füge das Skript unter StarterPlayer → StarterPlayerScripts ein.
+-- ⚠ Nur clientseitig, funktioniert im Play-Test in Roblox Studio.
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local hrp = character:WaitForChild("HumanoidRootPart")
+
+-- === HIER DEINE ZIEL-KOORDINATEN EINTRAGEN ===
+local TARGET = Vector3.new(1050, 125, 2561) -- <--- DEINE KOORDINATEN HIER
+-- ==============================================
+
+-- Teleportiere zum Ziel
+hrp.CFrame = CFrame.new(TARGET)
+
+print(string.format("Teleportiert zu: X=%.1f, Y=%.1f, Z=%.1f", TARGET.X, TARGET.Y, TARGET.Z))
+
+   end,
+})
+
+local Button = tpTab:CreateButton({
+   Name = "crim base",
+   Callback = function()
+   -- LocalScript – Teleportiere dich zu festen Koordinaten (ohne Rück-Teleport)
+-- Füge das Skript unter StarterPlayer → StarterPlayerScripts ein.
+-- ⚠ Nur clientseitig, funktioniert im Play-Test in Roblox Studio.
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local hrp = character:WaitForChild("HumanoidRootPart")
+
+-- === HIER DEINE ZIEL-KOORDINATEN EINTRAGEN ===
+local TARGET = Vector3.new(-863, 98, 2108) -- <--- DEINE KOORDINATEN HIER
+-- ==============================================
+
+-- Teleportiere zum Ziel
+hrp.CFrame = CFrame.new(TARGET)
+
+print(string.format("Teleportiert zu: X=%.1f, Y=%.1f, Z=%.1f", TARGET.X, TARGET.Y, TARGET.Z))
+
+   end,
+})
