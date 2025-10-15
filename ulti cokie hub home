@@ -70,6 +70,7 @@ local Label = gamesTab:CreateLabel("⚫99 nights in the forest", nil, Color3.fro
 local Button = keyTab:CreateButton({
    Name = "prisone life",
    Callback = function()
-   -- The function that takes place when the button is pressed
+  loadstring(game:HttpGet("https://raw.githubusercontent.com/xshipper23-png/ulti-cokie-hub/refs/heads/main/prison%20life",true))()
+  Rayfield:Destroy()
    end,
 })
