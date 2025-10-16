@@ -40,7 +40,7 @@ local Window = Rayfield:CreateWindow({
 local combatTab = Window:CreateTab("combat", nil) -- Title, Image
 local PLTab = Window:CreateTab("player", nil) -- Title, Image
 local tpTab = Window:CreateTab("teleport", nil) -- Title, Image
-local stuffTab = Window:CreateTab("other_stuff", nil) -- Title, Image
+local stuffTab = Window:CreateTab("other stuff", nil) -- Title, Image
 
 local Toggle = PLTab:CreateToggle({
    Name = "INFINIT JUMP",
@@ -798,6 +798,39 @@ if success then
     print("Alle Kinder von 'Doors' lokal entfernt.")
 else
     warn("Fehler beim Entfernen: " .. tostring(err))
+end
+
+   end,
+})
+
+local Button = stuffTab:CreateButton({
+   Name = "taser walk(let you walk wen you geht shot by taser)",
+   Callback = function()
+   -- LocalScript: Setzt WalkSpeed auf 50, wenn er auf 0 fällt
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+local function monitorWalkSpeed()
+	local character = player.Character or player.CharacterAdded:Wait()
+	local humanoid = character:WaitForChild("Humanoid")
+
+	print("👟 WalkSpeed-Monitor gestartet.")
+
+	humanoid:GetPropertyChangedSignal("WalkSpeed"):Connect(function()
+		if humanoid.WalkSpeed == 0 then
+			print("⚠️ WalkSpeed ist 0! Stelle wieder auf 50 ein.")
+			humanoid.WalkSpeed = 50
+		end
+	end)
+end
+
+player.CharacterAdded:Connect(function()
+	task.wait(1)
+	monitorWalkSpeed()
+end)
+
+if player.Character then
+	monitorWalkSpeed()
 end
 
    end,
