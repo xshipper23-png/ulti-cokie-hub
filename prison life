@@ -40,6 +40,7 @@ local Window = Rayfield:CreateWindow({
 local combatTab = Window:CreateTab("combat", nil) -- Title, Image
 local PLTab = Window:CreateTab("player", nil) -- Title, Image
 local tpTab = Window:CreateTab("teleport", nil) -- Title, Image
+local coolTab = Window:CreateTab("random cool stuff", nil) -- Title, Image
 
 local Toggle = PLTab:CreateToggle({
    Name = "INFINIT JUMP",
@@ -724,6 +725,39 @@ local TARGET = Vector3.new(-863, 98, 2108) -- <--- DEINE KOORDINATEN HIER
 hrp.CFrame = CFrame.new(TARGET)
 
 print(string.format("Teleportiert zu: X=%.1f, Y=%.1f, Z=%.1f", TARGET.X, TARGET.Y, TARGET.Z))
+
+   end,
+})
+
+local Button = coolTab:CreateButton({
+   Name = "open all doors perm (only for you)",
+   Callback = function()
+   -- LocalScript: löscht lokal alle Kinder eines Ordners namens "Doors" im Workspace
+local RunService = game:GetService("RunService")
+
+-- diese Abfrage stellt sicher, dass es CLIENT-SEITIG ist (LocalScript)
+if not RunService:IsClient() then
+    warn("Dieses Script ist für den Client gedacht.")
+    return
+end
+
+local folder = workspace:FindFirstChild("Doors")
+if not folder then
+    warn("Ordner 'Doors' nicht gefunden im Workspace.")
+    return
+end
+
+-- Sicherer Löschversuch
+local success, err = pcall(function()
+    -- ClearAllChildren löscht alle Children; alternativ for-loop, wenn du mehr Kontrolle willst.
+    folder:ClearAllChildren()
+end)
+
+if success then
+    print("Alle Kinder von 'Doors' lokal entfernt.")
+else
+    warn("Fehler beim Entfernen: " .. tostring(err))
+end
 
    end,
 })
