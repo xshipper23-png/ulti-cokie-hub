@@ -40,7 +40,7 @@ local Window = Rayfield:CreateWindow({
 local combatTab = Window:CreateTab("combat", nil) -- Title, Image
 local PLTab = Window:CreateTab("player", nil) -- Title, Image
 local tpTab = Window:CreateTab("teleport", nil) -- Title, Image
-local stuffTab = Window:CreateTab("other stuff", nil) -- Title, Image
+local stuffTab = Window:CreateTab("other_stuff", nil) -- Title, Image
 
 local Toggle = PLTab:CreateToggle({
    Name = "INFINIT JUMP",
