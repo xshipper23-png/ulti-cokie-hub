@@ -64,7 +64,7 @@ local Label = gamesTab:CreateLabel("⭐= new update!!", nil, Color3.fromRGB(255,
 local Section = gamesTab:CreateSection("GAMES")
 
 local Label = gamesTab:CreateLabel("🟢⭐prison life", nil, Color3.fromRGB(255, 255, 255), false) -- Title, Icon, Color, IgnoreTheme
-local Label = gamesTab:CreateLabel("🔵expedition antarctica", nil, Color3.fromRGB(255, 255, 255), false) -- Title, Icon, Color, IgnoreTheme
+local Label = gamesTab:CreateLabel("🔴expedition antarctica", nil, Color3.fromRGB(255, 255, 255), false) -- Title, Icon, Color, IgnoreTheme
 local Label = gamesTab:CreateLabel("⚫build a boat", nil, Color3.fromRGB(255, 255, 255), false) -- Title, Icon, Color, IgnoreTheme
 local Label = gamesTab:CreateLabel("⚫99 nights in the forest", nil, Color3.fromRGB(255, 255, 255), false) -- Title, Icon, Color, IgnoreTheme
 
