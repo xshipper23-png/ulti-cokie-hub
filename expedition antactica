@@ -1,1 +1,227 @@
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
+local Window = Rayfield:CreateWindow({
+   Name = "expedition antactica",
+   Icon = 0, -- Icon in Topbar. Can use Lucide Icons (string) or Roblox Image (number). 0 to use no icon (default).
+   LoadingTitle = "system atching",
+   LoadingSubtitle = "by ulti_cokie",
+   ShowText = "ulti_cokie", -- for mobile users to unhide rayfield, change if you'd like
+   Theme = "Dark Blue", -- Check https://docs.sirius.menu/rayfield/configuration/themes
+
+   ToggleUIKeybind = "g", -- The keybind to toggle the UI visibility (string like "K" or Enum.KeyCode)
+
+   DisableRayfieldPrompts = true,
+   DisableBuildWarnings = false, -- Prevents Rayfield from warning when the script has a version mismatch with the interface
+
+   ConfigurationSaving = {
+      Enabled = false,
+      FolderName = nil, -- Create a custom folder for your hub/game
+      FileName = "Big Hub"
+   },
+
+   Discord = {
+      Enabled = false, -- Prompt the user to join your Discord server if their executor supports it
+      Invite = "noinvitelink", -- The Discord invite code, do not include discord.gg/. E.g. discord.gg/ ABCD would be ABCD
+      RememberJoins = true -- Set this to false to make them join the discord every time they load it up
+   },
+
+   KeySystem = false, -- Set this to true to use our key system
+   KeySettings = {
+      Title = "Untitled",
+      Subtitle = "Key System",
+      Note = "No method of obtaining the key is provided", -- Use this to tell the user how to get a key
+      FileName = "Key", -- It is recommended to use something unique as other scripts using Rayfield may overwrite your key file
+      SaveKey = true, -- The user's key will be saved, but if you change the key, they will be unable to use your script
+      GrabKeyFromSite = false, -- If this is true, set Key below to the RAW site you would like Rayfield to get the key from
+      Key = {"Hello"} -- List of keys that will be accepted by the system, can be RAW file links (pastebin, github etc) or simple strings ("hello","key22")
+   }
+})
+
+local PLTab = Window:CreateTab("player", nil) -- Title, Image
+local tpTab = Window:CreateTab("teleport", nil) -- Title, Image
+local setTab = Window:CreateTab("settings", nil) -- Title, Image
+
+local Section = PLTab:CreateSection("player settings")
+
+local Slider = PLTab:CreateSlider({
+   Name = "speed",
+   Range = {10, 300},
+   Increment = 1,
+   Suffix = " ",
+   CurrentValue = 16,
+   Flag = "Slider1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Callback = function(speed)
+-- Optimiertes Live-Speed Script (kein Spam)
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
+
+local lastSpeed -- merkt sich den alten Wert
+
+-- Funktion: liest aktuellen speed-Wert
+local function getSpeed()
+    if typeof(speed) == "function" then
+        return speed()
+    elseif typeof(speed) == "Instance" and speed:IsA("NumberValue") then
+        return speed.Value
+    else
+        return speed
+    end
+end
+
+-- Funktion: setzt Geschwindigkeit nur wenn nötig
+local function applySpeed()
+    local character = player.Character
+    if not character then return end
+
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if not humanoid then return end
+
+    local newSpeed = getSpeed()
+    if newSpeed ~= lastSpeed then
+        humanoid.WalkSpeed = newSpeed
+        print("[SPEED] WalkSpeed geändert auf:", newSpeed)
+        lastSpeed = newSpeed
+    end
+end
+
+-- Beim Respawn neu setzen
+player.CharacterAdded:Connect(function()
+    player.Character:WaitForChild("Humanoid")
+    lastSpeed = nil
+    applySpeed()
+end)
+
+-- Wenn speed ein NumberValue ist → live zuhören
+if typeof(speed) == "Instance" and speed:IsA("NumberValue") then
+    speed:GetPropertyChangedSignal("Value"):Connect(function()
+        applySpeed()
+    end)
+end
+
+-- Nur ca. 5x pro Sekunde prüfen (schont CPU)
+RunService.Stepped:Connect(function(_, step)
+    applySpeed()
+end)
+
+-- Anfang
+applySpeed()
+
+   end,
+})
+
+local Slider = PLTab:CreateSlider({
+   Name = "jump BOST",
+   Range = {0, 250},
+   Increment = 10,
+   Suffix = " ",
+   CurrentValue = 25,
+   Flag = "Slider1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Callback = function(jumpb)
+  -- Optimiertes Live-Jump Script (Variable/Funktion/NumberValue "jumpb")
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
+
+local lastJump -- merkt sich den alten Wert
+
+-- Funktion: liest aktuellen jumpb-Wert
+local function getJump()
+    if typeof(jumpb) == "function" then
+        return jumpb()
+    elseif typeof(jumpb) == "Instance" and jumpb:IsA("NumberValue") then
+        return jumpb.Value
+    else
+        return jumpb
+    end
+end
+
+-- Funktion: setzt JumpPower nur wenn nötig
+local function applyJump()
+    local character = player.Character
+    if not character then return end
+
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if not humanoid then return end
+
+    local newJump = getJump()
+    if newJump ~= lastJump then
+        humanoid.UseJumpPower = true -- sicherstellen, dass JumpPower benutzt wird
+        humanoid.JumpPower = newJump
+        print("[JUMP] JumpPower geändert auf:", newJump)
+        lastJump = newJump
+    end
+end
+
+-- Beim Respawn neu setzen
+player.CharacterAdded:Connect(function()
+    player.Character:WaitForChild("Humanoid")
+    lastJump = nil
+    applyJump()
+end)
+
+-- Wenn jumpb ein NumberValue ist → live zuhören
+if typeof(jumpb) == "Instance" and jumpb:IsA("NumberValue") then
+    jumpb:GetPropertyChangedSignal("Value"):Connect(function()
+        applyJump()
+    end)
+end
+
+-- Alle paar Frames prüfen (nicht spammen)
+RunService.Stepped:Connect(function()
+    applyJump()
+end)
+
+-- Anfang
+applyJump()
+
+   end,
+})
+
+local Section = PLTab:CreateSection("ohter things")
+
+local Toggle = PLTab:CreateToggle({
+   Name = "INFINIT JUMP",
+   CurrentValue = false,
+   Flag = "Toggle1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Callback = function(infijump)
+-- GLOBAL BOOLEAN zur Steuerung
+if _G.InfiniteJumpEnabled == nil then
+    _G.InfiniteJumpEnabled = true -- erstes Mal starten → aktiv
+else
+    _G.InfiniteJumpEnabled = not _G.InfiniteJumpEnabled -- beim erneuten Starten → Toggle
+end
+
+print("[DEBUG] Infinite Jump Status:", _G.InfiniteJumpEnabled)
+
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local player = Players.LocalPlayer
+
+-- Verbindung, die nur einmal erstellt wird
+if not _G._InfiniteJumpConnection then
+    _G._InfiniteJumpConnection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if gameProcessed then return end
+        if input.KeyCode == Enum.KeyCode.Space and _G.InfiniteJumpEnabled then
+            local character = player.Character
+            if not character then return end
+            local humanoid = character:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+            end
+        end
+    end)
+end
+
+   end,
+})
+
+local Section = setTab:CreateSection("stations")
+
+local Button = Tab:CreateButton({
+   Name = "spawn station",
+   Callback = function()
+   -- The function that takes place when the button is pressed
+   end,
+})
