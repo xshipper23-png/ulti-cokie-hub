@@ -993,3 +993,13 @@ local Button = tpTab:CreateButton({
         end
     end,
 })
+
+local Section = combatTab:CreateSection("auto kill")
+
+local Button = combatTab:CreateButton({
+   Name = "kill all gui",
+   Callback = function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/ShutUpJamesTheLoserAlt/PrisonLife/refs/heads/main/Killall"))()
+   end
+})
+
