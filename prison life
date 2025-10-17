@@ -804,7 +804,7 @@ end
 })
 
 local Button = stuffTab:CreateButton({
-   Name = "taser walk(let you walk wen you geht shot by taser)",
+   Name = "anti taser ()",
    Callback = function()
    -- LocalScript: Setzt WalkSpeed auf 50, wenn er auf 0 fällt
 local Players = game:GetService("Players")
@@ -832,6 +832,164 @@ end)
 if player.Character then
 	monitorWalkSpeed()
 end
+local StarterGui = game:GetService("StarterGui")
 
+-- Funktion, um Backpack dauerhaft sichtbar zu halten
+local function enableBackpack()
+    -- CoreGui aktivieren
+    StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, true)
+end
+
+-- Direkt aktivieren
+enableBackpack()
+
+-- Endlosschleife: alle 0.1 Sekunden prüfen
+spawn(function()
+    while true do
+        enableBackpack()
+        wait(0.1)
+    end
+end)
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+-- Liste der Standard-AnimationsIDs von Roblox (Idle, Run, Walk, Jump, etc.)
+local standardAnimationIds = {
+    ["rbxassetid://180435571"] = true, -- idle
+    ["rbxassetid://180426354"] = true, -- walk
+    ["rbxassetid://180436148"] = true, -- run
+    ["rbxassetid://180433900"] = true, -- jump
+    ["rbxassetid://180436334"] = true, -- fall
+}
+
+-- Funktion, um Custom-Animationen zu stoppen
+local function stopCustomAnimations(humanoid)
+    if not humanoid then return end
+
+    for _, track in ipairs(humanoid:GetPlayingAnimationTracks()) do
+        if track.Animation then
+            local id = "rbxassetid://"..track.Animation.AnimationId:match("%d+")
+            if not standardAnimationIds[id] then
+                track:Stop()
+            end
+        end
+    end
+end
+
+-- Überwacht einen Spieler
+local function monitorPlayer(player)
+    player.CharacterAdded:Connect(function(char)
+        local humanoid = char:WaitForChild("Humanoid")
+        -- Schleife, um kontinuierlich neue Tracks zu prüfen
+        spawn(function()
+            while humanoid.Parent do
+                stopCustomAnimations(humanoid)
+                wait(0.1)
+            end
+        end)
+    end)
+
+    -- Falls Character schon existiert
+    if player.Character then
+        local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            spawn(function()
+                while humanoid.Parent do
+                    stopCustomAnimations(humanoid)
+                    wait(0.1)
+                end
+            end)
+        end
+    end
+end
+
+-- Alle Spieler überwachen
+for _, player in ipairs(Players:GetPlayers()) do
+    if player ~= LocalPlayer then
+        monitorPlayer(player)
+    end
+end
+
+-- Neue Spieler automatisch überwachen
+Players.PlayerAdded:Connect(monitorPlayer)
+
+            
    end,
+})
+
+local Section = tpTab:CreateSection("player tps")
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+-- Erstelle Dropdown
+local Dropdown = tpTab:CreateDropdown({
+    Name = "choose_to_tp_target",
+    Options = {}, -- wird später gefüllt
+    CurrentOption = {},
+    MultipleOptions = false,
+    Flag = "Dropdown1",
+    Callback = function(selected)
+        local targetName = selected[1]
+        if targetName then
+            teleportToPlayer(targetName)
+        end
+    end,
+})
+
+-- Funktion: aktuelle Spielernamen holen
+local function getPlayerNames()
+    local names = {}
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            table.insert(names, player.Name)
+        end
+    end
+    return names
+end
+
+-- Funktion: Dropdown aktualisieren
+local function refreshDropdown()
+    local playerNames = getPlayerNames()
+    Dropdown:Refresh(playerNames)
+    print("Dropdown aktualisiert:", table.concat(playerNames, ", "))
+end
+
+-- Spieler join/leave → Liste aktualisieren
+Players.PlayerAdded:Connect(refreshDropdown)
+Players.PlayerRemoving:Connect(refreshDropdown)
+
+-- Direkt beim Start aktualisieren
+refreshDropdown()
+
+-- Funktion: instant teleportieren
+function teleportToPlayer(targetName)
+    local targetPlayer = Players:FindFirstChild(targetName)
+    if not targetPlayer then
+        warn("Spieler '" .. targetName .. "' nicht gefunden.")
+        return
+    end
+
+    local targetChar = targetPlayer.Character
+    local localChar = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+
+    if targetChar and targetChar:FindFirstChild("HumanoidRootPart") and localChar:FindFirstChild("HumanoidRootPart") then
+        local hrp = localChar.HumanoidRootPart
+        hrp.CFrame = targetChar.HumanoidRootPart.CFrame + Vector3.new(0,3,0) -- instant teleport
+        print("✅ Instant teleportiert zu:", targetName)
+    else
+        warn("⚠️ HumanoidRootPart nicht gefunden.")
+    end
+end
+
+-- Button optional
+local Button = tpTab:CreateButton({
+    Name = "tp_to_target",
+    Callback = function()
+        local selected = Dropdown.CurrentOption[1]
+        if selected then
+            teleportToPlayer(selected)
+        end
+    end,
 })
