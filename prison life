@@ -42,6 +42,9 @@ local PLTab = Window:CreateTab("player", nil) -- Title, Image
 local tpTab = Window:CreateTab("teleport", nil) -- Title, Image
 local stuffTab = Window:CreateTab("other stuff", nil) -- Title, Image
 local gTab = Window:CreateTab("give", nil) -- Title, Image
+local upTab = Window:CreateTab("updates", nil) -- Title, Image
+
+local Label = upTab:CreateLabel("last update:new aimbot/give/tp", nil, Color3.fromRGB(255, 255, 255), false) -- Title, Icon, Color,
 
 local Toggle = PLTab:CreateToggle({
    Name = "INFINIT JUMP",
@@ -177,175 +180,112 @@ end
 })
 
 local Toggle = combatTab:CreateToggle({
-   Name = "ESP name ",
+   Name = "ESP",
    CurrentValue = false,
    Flag = "Toggle3", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
    Callback = function(e)
---// Full Client ESP (Highlight + Name + Health)
--- führt bei erneutem Ausführen Toggle aus
+-- StarterPlayerScripts/TeamESP_Minimal.lua
+-- Highlight + Name + Teamfarbe + Healthbar
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
--- Check, ob bereits ESP läuft
-if _G.FullESP_Active then
-	-- 🔴 Wenn Script schon läuft → ausschalten
-	print("[ESP] Deaktiviert")
-	_G.FullESP_Active = false
-
-	for _, hl in pairs(workspace:GetDescendants()) do
-		if hl:IsA("Highlight") and hl.Name == "ClientESP" then
-			hl:Destroy()
-		end
-	end
-	for _, plr in pairs(Players:GetPlayers()) do
-		if plr.Character then
-			local head = plr.Character:FindFirstChild("Head")
-			if head then
-				local gui = head:FindFirstChild("NameHealthESP")
-				if gui then gui:Destroy() end
-			end
-		end
-	end
-	return
-end
-
--- 🟢 Wenn ESP noch nicht aktiv ist → einschalten
-_G.FullESP_Active = true
-print("[ESP] Aktiviert")
-
-local Highlights = {}
-local Billboards = {}
-
--- === Hilfsfunktionen ===
-
-local function createBillboard(player)
+local function createDisplay(player)
 	if player == LocalPlayer then return end
-	if not player.Character then return end
-	local head = player.Character:FindFirstChild("Head")
-	if not head then return end
 
-	local billboard = Instance.new("BillboardGui")
-	billboard.Name = "NameHealthESP"
-	billboard.AlwaysOnTop = true
-	billboard.Size = UDim2.new(4, 0, 1, 0)
-	billboard.StudsOffset = Vector3.new(0, 3, 0)
-	billboard.MaxDistance = 500
-	billboard.Parent = head
+	local function attachToCharacter(character)
+		local head = character:WaitForChild("Head", 5)
+		if not head then return end
 
-	-- Name
-	local nameLabel = Instance.new("TextLabel")
-	nameLabel.BackgroundTransparency = 1
-	nameLabel.Size = UDim2.new(1, 0, 0.4, 0)
-	nameLabel.Text = player.DisplayName
-	nameLabel.Font = Enum.Font.SourceSansBold
-	nameLabel.TextScaled = true
-	nameLabel.TextStrokeTransparency = 0
-	nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-	nameLabel.Parent = billboard
+		-- === BillboardGui ===
+		local billboard = Instance.new("BillboardGui")
+		billboard.Name = "TeamESP_Display"
+		billboard.AlwaysOnTop = true
+		billboard.Size = UDim2.new(4, 0, 1, 0)
+		billboard.StudsOffset = Vector3.new(0, 3, 0)
+		billboard.MaxDistance = 300
+		billboard.Parent = head
 
-	-- Health Bar Hintergrund
-	local bg = Instance.new("Frame")
-	bg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-	bg.BorderSizePixel = 0
-	bg.Position = UDim2.new(0.1, 0, 0.5, 0)
-	bg.Size = UDim2.new(0.8, 0, 0.2, 0)
-	bg.Parent = billboard
+		-- Spielername
+		local nameLabel = Instance.new("TextLabel")
+		nameLabel.BackgroundTransparency = 1
+		nameLabel.Size = UDim2.new(0.75, 0, 0.4, 0)
+		nameLabel.Position = UDim2.new(0, 0, 0, 0)
+		nameLabel.Text = player.DisplayName
+		nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+		nameLabel.TextStrokeTransparency = 0
+		nameLabel.Font = Enum.Font.SourceSansBold
+		nameLabel.TextScaled = true
+		nameLabel.Parent = billboard
 
-	-- Health Bar Füllung
-	local fill = Instance.new("Frame")
-	fill.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
-	fill.BorderSizePixel = 0
-	fill.Size = UDim2.new(1, 0, 1, 0)
-	fill.Parent = bg
+		-- Teamfarbe neben Name
+		local teamBox = Instance.new("Frame")
+		teamBox.Size = UDim2.new(0.2, 0, 0.4, 0)
+		teamBox.Position = UDim2.new(0.78, 0, 0, 0)
+		teamBox.BorderSizePixel = 0
+		teamBox.BackgroundColor3 = player.TeamColor and player.TeamColor.Color or Color3.new(1, 1, 1)
+		teamBox.Parent = billboard
 
-	local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
-	if humanoid then
-		local function updateHealth()
-			local ratio = math.clamp(humanoid.Health / humanoid.MaxHealth, 0, 1)
-			fill.Size = UDim2.new(ratio, 0, 1, 0)
-			if ratio > 0.5 then
-				fill.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
-			elseif ratio > 0.25 then
-				fill.BackgroundColor3 = Color3.fromRGB(255, 255, 0)
-			else
-				fill.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+		-- Healthbar
+		local bg = Instance.new("Frame")
+		bg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+		bg.BorderSizePixel = 0
+		bg.Position = UDim2.new(0.1, 0, 0.55, 0)
+		bg.Size = UDim2.new(0.8, 0, 0.2, 0)
+		bg.Parent = billboard
+
+		local fill = Instance.new("Frame")
+		fill.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+		fill.BorderSizePixel = 0
+		fill.Size = UDim2.new(1, 0, 1, 0)
+		fill.Parent = bg
+
+		local humanoid = character:FindFirstChildOfClass("Humanoid")
+		if humanoid then
+			local function updateHealth()
+				local ratio = math.clamp(humanoid.Health / humanoid.MaxHealth, 0, 1)
+				fill.Size = UDim2.new(ratio, 0, 1, 0)
+				if ratio > 0.5 then
+					fill.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+				elseif ratio > 0.25 then
+					fill.BackgroundColor3 = Color3.fromRGB(255, 255, 0)
+				else
+					fill.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+				end
 			end
+			humanoid.HealthChanged:Connect(updateHealth)
+			updateHealth()
 		end
-		humanoid.HealthChanged:Connect(updateHealth)
-		updateHealth()
-	end
 
-	Billboards[player] = billboard
-end
+		-- === Highlight in Teamfarbe ===
+		local highlight = Instance.new("Highlight")
+		highlight.Name = "TeamHighlight"
+		highlight.Adornee = character
+		highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+		highlight.FillTransparency = 0.7
+		highlight.OutlineTransparency = 0.1
+		highlight.FillColor = player.TeamColor and player.TeamColor.Color or Color3.new(1,1,1)
+		highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+		highlight.Parent = character
 
-local function createHighlight(player)
-	if player == LocalPlayer then return end
-	if not player.Character then return end
-
-	local hl = Instance.new("Highlight")
-	hl.Name = "ClientESP"
-	hl.Adornee = player.Character
-	hl.FillColor = Color3.fromRGB(255, 0, 0)
-	hl.FillTransparency = 0.6
-	hl.OutlineColor = Color3.fromRGB(255, 255, 255)
-	hl.OutlineTransparency = 0.1
-	hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-	hl.Parent = player.Character
-
-	Highlights[player] = hl
-	createBillboard(player)
-
-	local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
-	if humanoid then
-		humanoid.Died:Connect(function()
-			if hl and hl.Parent then
-				local clone = hl:Clone()
-				clone.Parent = workspace
-				clone.Adornee = player.Character
-				task.delay(8, function()
-					if clone then clone:Destroy() end
-				end)
-			end
-			Highlights[player] = nil
+		-- Update bei Teamwechsel
+		player:GetPropertyChangedSignal("TeamColor"):Connect(function()
+			teamBox.BackgroundColor3 = player.TeamColor.Color
+			highlight.FillColor = player.TeamColor.Color
 		end)
 	end
+
+	if player.Character then
+		attachToCharacter(player.Character)
+	end
+	player.CharacterAdded:Connect(attachToCharacter)
 end
 
--- === Haupt-Setup ===
-
+-- === Starte für alle Spieler ===
 for _, plr in pairs(Players:GetPlayers()) do
-	if plr ~= LocalPlayer then
-		createHighlight(plr)
-	end
-	plr.CharacterAdded:Connect(function()
-		task.wait(0.2)
-		if _G.FullESP_Active then
-			createHighlight(plr)
-		end
-	end)
+	createDisplay(plr)
 end
-
-Players.PlayerAdded:Connect(function(plr)
-	if _G.FullESP_Active then
-		plr.CharacterAdded:Connect(function()
-			task.wait(0.2)
-			createHighlight(plr)
-		end)
-	end
-end)
-
-Players.PlayerRemoving:Connect(function(plr)
-	if Highlights[plr] then
-		Highlights[plr]:Destroy()
-		Highlights[plr] = nil
-	end
-	local head = plr.Character and plr.Character:FindFirstChild("Head")
-	if head then
-		local gui = head:FindFirstChild("NameHealthESP")
-		if gui then gui:Destroy() end
-	end
-end)
+Players.PlayerAdded:Connect(createDisplay)
 
    end,
 })
