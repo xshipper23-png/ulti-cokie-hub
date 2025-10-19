@@ -181,184 +181,171 @@ local Toggle = combatTab:CreateToggle({
    CurrentValue = false,
    Flag = "Toggle3", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
    Callback = function(e)
--- ESP Name Toggle Script
+--// Full Client ESP (Highlight + Name + Health)
+-- führt bei erneutem Ausführen Toggle aus
 
 local Players = game:GetService("Players")
-local localPlayer = Players.LocalPlayer
+local LocalPlayer = Players.LocalPlayer
 
--- Toggle Status merken
-if _G.ESPNameEnabled == nil then
-    _G.ESPNameEnabled = true
-else
-    _G.ESPNameEnabled = not _G.ESPNameEnabled
+-- Check, ob bereits ESP läuft
+if _G.FullESP_Active then
+	-- 🔴 Wenn Script schon läuft → ausschalten
+	print("[ESP] Deaktiviert")
+	_G.FullESP_Active = false
+
+	for _, hl in pairs(workspace:GetDescendants()) do
+		if hl:IsA("Highlight") and hl.Name == "ClientESP" then
+			hl:Destroy()
+		end
+	end
+	for _, plr in pairs(Players:GetPlayers()) do
+		if plr.Character then
+			local head = plr.Character:FindFirstChild("Head")
+			if head then
+				local gui = head:FindFirstChild("NameHealthESP")
+				if gui then gui:Destroy() end
+			end
+		end
+	end
+	return
 end
 
-print("[ESP NAME] Status:", _G.ESPNameEnabled and "ON" or "OFF")
+-- 🟢 Wenn ESP noch nicht aktiv ist → einschalten
+_G.FullESP_Active = true
+print("[ESP] Aktiviert")
 
--- Speicher für alle Nametags
-_G._ESPNametags = _G._ESPNametags or {}
+local Highlights = {}
+local Billboards = {}
 
--- Nametag erstellen
-local function createNametag(player)
-    if player == localPlayer then return end
-    if not player.Character then return end
-    if _G._ESPNametags[player] and _G._ESPNametags[player].Parent then return end
+-- === Hilfsfunktionen ===
 
-    local head = player.Character:FindFirstChild("Head")
-    if not head then return end
+local function createBillboard(player)
+	if player == LocalPlayer then return end
+	if not player.Character then return end
+	local head = player.Character:FindFirstChild("Head")
+	if not head then return end
 
-    local billboard = Instance.new("BillboardGui")
-    billboard.Name = "ESP_Name"
-    billboard.Size = UDim2.new(0, 100, 0, 30)
-    billboard.Adornee = head
-    billboard.AlwaysOnTop = true
-    billboard.StudsOffset = Vector3.new(0, 2, 0)
+	local billboard = Instance.new("BillboardGui")
+	billboard.Name = "NameHealthESP"
+	billboard.AlwaysOnTop = true
+	billboard.Size = UDim2.new(4, 0, 1, 0)
+	billboard.StudsOffset = Vector3.new(0, 3, 0)
+	billboard.MaxDistance = 500
+	billboard.Parent = head
 
-    local text = Instance.new("TextLabel", billboard)
-    text.Size = UDim2.new(1, 0, 1, 0)
-    text.Text = player.Name
-    text.BackgroundTransparency = 1
-    text.TextColor3 = Color3.fromRGB(255, 255, 255)
-    text.TextStrokeTransparency = 0
-    text.Font = Enum.Font.SourceSansBold
-    text.TextScaled = true
+	-- Name
+	local nameLabel = Instance.new("TextLabel")
+	nameLabel.BackgroundTransparency = 1
+	nameLabel.Size = UDim2.new(1, 0, 0.4, 0)
+	nameLabel.Text = player.DisplayName
+	nameLabel.Font = Enum.Font.SourceSansBold
+	nameLabel.TextScaled = true
+	nameLabel.TextStrokeTransparency = 0
+	nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+	nameLabel.Parent = billboard
 
-    billboard.Parent = head
-    _G._ESPNametags[player] = billboard
+	-- Health Bar Hintergrund
+	local bg = Instance.new("Frame")
+	bg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+	bg.BorderSizePixel = 0
+	bg.Position = UDim2.new(0.1, 0, 0.5, 0)
+	bg.Size = UDim2.new(0.8, 0, 0.2, 0)
+	bg.Parent = billboard
+
+	-- Health Bar Füllung
+	local fill = Instance.new("Frame")
+	fill.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+	fill.BorderSizePixel = 0
+	fill.Size = UDim2.new(1, 0, 1, 0)
+	fill.Parent = bg
+
+	local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+	if humanoid then
+		local function updateHealth()
+			local ratio = math.clamp(humanoid.Health / humanoid.MaxHealth, 0, 1)
+			fill.Size = UDim2.new(ratio, 0, 1, 0)
+			if ratio > 0.5 then
+				fill.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+			elseif ratio > 0.25 then
+				fill.BackgroundColor3 = Color3.fromRGB(255, 255, 0)
+			else
+				fill.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+			end
+		end
+		humanoid.HealthChanged:Connect(updateHealth)
+		updateHealth()
+	end
+
+	Billboards[player] = billboard
 end
 
--- Nametag löschen
-local function removeNametag(player)
-    if _G._ESPNametags[player] then
-        _G._ESPNametags[player]:Destroy()
-        _G._ESPNametags[player] = nil
-    end
+local function createHighlight(player)
+	if player == LocalPlayer then return end
+	if not player.Character then return end
+
+	local hl = Instance.new("Highlight")
+	hl.Name = "ClientESP"
+	hl.Adornee = player.Character
+	hl.FillColor = Color3.fromRGB(255, 0, 0)
+	hl.FillTransparency = 0.6
+	hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+	hl.OutlineTransparency = 0.1
+	hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+	hl.Parent = player.Character
+
+	Highlights[player] = hl
+	createBillboard(player)
+
+	local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+	if humanoid then
+		humanoid.Died:Connect(function()
+			if hl and hl.Parent then
+				local clone = hl:Clone()
+				clone.Parent = workspace
+				clone.Adornee = player.Character
+				task.delay(8, function()
+					if clone then clone:Destroy() end
+				end)
+			end
+			Highlights[player] = nil
+		end)
+	end
 end
 
--- Aktivieren
-if _G.ESPNameEnabled then
-    for _, pl in ipairs(Players:GetPlayers()) do
-        if pl ~= localPlayer then
-            createNametag(pl)
-        end
-    end
+-- === Haupt-Setup ===
 
-    if not _G._ESP_Name_PlayerAddedConn then
-        _G._ESP_Name_PlayerAddedConn = Players.PlayerAdded:Connect(function(pl)
-            pl.CharacterAdded:Connect(function()
-                if _G.ESPNameEnabled then
-                    createNametag(pl)
-                end
-            end)
-        end)
-    end
-
-    print("[ESP NAME] Activated.")
-
--- Deaktivieren → alles entfernen
-else
-    for _, pl in pairs(_G._ESPNametags) do
-        if pl and pl.Parent then
-            pl:Destroy()
-        end
-    end
-    _G._ESPNametags = {}
-    print("[ESP NAME] Deactivated and cleaned up.")
+for _, plr in pairs(Players:GetPlayers()) do
+	if plr ~= LocalPlayer then
+		createHighlight(plr)
+	end
+	plr.CharacterAdded:Connect(function()
+		task.wait(0.2)
+		if _G.FullESP_Active then
+			createHighlight(plr)
+		end
+	end)
 end
 
-   end,
-})
+Players.PlayerAdded:Connect(function(plr)
+	if _G.FullESP_Active then
+		plr.CharacterAdded:Connect(function()
+			task.wait(0.2)
+			createHighlight(plr)
+		end)
+	end
+end)
 
-local Toggle = combatTab:CreateToggle({
-   Name = "ESP BODY",
-   CurrentValue = false,
-   Flag = "e", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
-   Callback = function(e)
-  -- ESP Highlight Toggle Script
-
-local Players = game:GetService("Players")
-local localPlayer = Players.LocalPlayer
-
--- Toggle Status merken
-if _G.ESPHighlightEnabled == nil then
-    _G.ESPHighlightEnabled = true
-else
-    _G.ESPHighlightEnabled = not _G.ESPHighlightEnabled
-end
-
-print("[ESP HIGHLIGHT] Status:", _G.ESPHighlightEnabled and "ON" or "OFF")
-
--- Speichert alle Highlights, damit wir sie entfernen können
-_G._ESPHighlights = _G._ESPHighlights or {}
-
--- Funktion, die Highlight für einen Spieler erstellt
-local function createHighlightForCharacter(player)
-    if player == localPlayer then return end
-    if not player.Character then return end
-    if _G._ESPHighlights[player] and _G._ESPHighlights[player].Parent then return end
-
-    local highlight = Instance.new("Highlight")
-    highlight.Name = "ESP_Highlight"
-    highlight.Adornee = player.Character
-    highlight.FillColor = Color3.fromRGB(255, 50, 50) -- Rot (anpassbar)
-    highlight.OutlineColor = Color3.fromRGB(255, 255, 255) -- Weiß
-    highlight.FillTransparency = 0.5
-    highlight.OutlineTransparency = 0
-    highlight.Parent = player.Character
-
-    _G._ESPHighlights[player] = highlight
-end
-
--- Funktion, die Highlight entfernt
-local function removeHighlightForPlayer(player)
-    if _G._ESPHighlights[player] then
-        _G._ESPHighlights[player]:Destroy()
-        _G._ESPHighlights[player] = nil
-    end
-end
-
--- Wenn aktiv → Highlights erstellen
-if _G.ESPHighlightEnabled then
-    for _, pl in ipairs(Players:GetPlayers()) do
-        if pl ~= localPlayer and pl.Character then
-            createHighlightForCharacter(pl)
-        end
-    end
-
-    -- Player joins
-    if not _G._ESP_Highlight_PlayerAddedConn then
-        _G._ESP_Highlight_PlayerAddedConn = Players.PlayerAdded:Connect(function(pl)
-            pl.CharacterAdded:Connect(function()
-                if _G.ESPHighlightEnabled then
-                    createHighlightForCharacter(pl)
-                end
-            end)
-        end)
-    end
-
-    -- Charakterwechsel für existierende Spieler
-    if not _G._ESP_Highlight_CharAddedConn then
-        _G._ESP_Highlight_CharAddedConn = {}
-    end
-    for _, pl in ipairs(Players:GetPlayers()) do
-        if pl ~= localPlayer and not _G._ESP_Highlight_CharAddedConn[pl] then
-            _G._ESP_Highlight_CharAddedConn[pl] = pl.CharacterAdded:Connect(function()
-                if _G.ESPHighlightEnabled then
-                    createHighlightForCharacter(pl)
-                end
-            end)
-        end
-    end
-
-    print("[ESP HIGHLIGHT] Activated.")
-
--- Wenn deaktiviert → alles aufräumen
-else
-    for _, pl in ipairs(Players:GetPlayers()) do
-        removeHighlightForPlayer(pl)
-    end
-    print("[ESP HIGHLIGHT] Deactivated and cleaned up.")
-end
+Players.PlayerRemoving:Connect(function(plr)
+	if Highlights[plr] then
+		Highlights[plr]:Destroy()
+		Highlights[plr] = nil
+	end
+	local head = plr.Character and plr.Character:FindFirstChild("Head")
+	if head then
+		local gui = head:FindFirstChild("NameHealthESP")
+		if gui then gui:Destroy() end
+	end
+end)
 
    end,
 })
