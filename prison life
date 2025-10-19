@@ -41,6 +41,7 @@ local combatTab = Window:CreateTab("combat", nil) -- Title, Image
 local PLTab = Window:CreateTab("player", nil) -- Title, Image
 local tpTab = Window:CreateTab("teleport", nil) -- Title, Image
 local stuffTab = Window:CreateTab("other stuff", nil) -- Title, Image
+local gTab = Window:CreateTab("give", nil) -- Title, Image
 
 local Toggle = PLTab:CreateToggle({
    Name = "INFINIT JUMP",
@@ -498,9 +499,9 @@ applyJump()
    end,
 })
 
-local Section = combatTab:CreateSection("give weopens")
+local Section = gTab:CreateSection("give weopens")
 
-local Button = combatTab:CreateButton({
+local Button = gTab:CreateButton({
    Name = "get pistol",
    Callback = function()
   -- LocalScript – Teleportiere dich zu festen Koordinaten und zurück
@@ -535,7 +536,7 @@ end
    end,
 })
 
-local Button = combatTab:CreateButton({
+local Button = gTab:CreateButton({
    Name = "get pump",
    Callback = function()
   -- LocalScript – Teleportiere dich zu festen Koordinaten und zurück
@@ -570,7 +571,7 @@ end
    end,
 })
 
-local Button = combatTab:CreateButton({
+local Button = gTab:CreateButton({
    Name = "get AK-47",
    Callback = function()
   -- LocalScript – Teleportiere dich zu festen Koordinaten und zurück
@@ -583,7 +584,7 @@ local character = player.Character or player.CharacterAdded:Wait()
 local hrp = character:WaitForChild("HumanoidRootPart")
 
 -- === HIER DEINE ZIEL-KOORDINATEN EINTRAGEN ===
-local TARGET = Vector3.new(-937, 94, 2050) -- <--- DEINE KOORDINATEN
+local TARGET = Vector3.new(-911, 94, 2051) -- <--- DEINE KOORDINATEN
 -- ==============================================
 
 -- Position merken, wo Skript gestartet wurde
@@ -850,71 +851,7 @@ spawn(function()
         wait(0.1)
     end
 end)
-
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-
--- Liste der Standard-AnimationsIDs von Roblox (Idle, Run, Walk, Jump, etc.)
-local standardAnimationIds = {
-    ["rbxassetid://180435571"] = true, -- idle
-    ["rbxassetid://180426354"] = true, -- walk
-    ["rbxassetid://180436148"] = true, -- run
-    ["rbxassetid://180433900"] = true, -- jump
-    ["rbxassetid://180436334"] = true, -- fall
-}
-
--- Funktion, um Custom-Animationen zu stoppen
-local function stopCustomAnimations(humanoid)
-    if not humanoid then return end
-
-    for _, track in ipairs(humanoid:GetPlayingAnimationTracks()) do
-        if track.Animation then
-            local id = "rbxassetid://"..track.Animation.AnimationId:match("%d+")
-            if not standardAnimationIds[id] then
-                track:Stop()
-            end
-        end
-    end
-end
-
--- Überwacht einen Spieler
-local function monitorPlayer(player)
-    player.CharacterAdded:Connect(function(char)
-        local humanoid = char:WaitForChild("Humanoid")
-        -- Schleife, um kontinuierlich neue Tracks zu prüfen
-        spawn(function()
-            while humanoid.Parent do
-                stopCustomAnimations(humanoid)
-                wait(0.1)
-            end
-        end)
-    end)
-
-    -- Falls Character schon existiert
-    if player.Character then
-        local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
-        if humanoid then
-            spawn(function()
-                while humanoid.Parent do
-                    stopCustomAnimations(humanoid)
-                    wait(0.1)
-                end
-            end)
-        end
-    end
-end
-
--- Alle Spieler überwachen
-for _, player in ipairs(Players:GetPlayers()) do
-    if player ~= LocalPlayer then
-        monitorPlayer(player)
-    end
-end
-
--- Neue Spieler automatisch überwachen
-Players.PlayerAdded:Connect(monitorPlayer)
-
-            
+  
    end,
 })
 
@@ -994,12 +931,11 @@ local Button = tpTab:CreateButton({
     end,
 })
 
-local Section = combatTab:CreateSection("auto kill")
+local Section = gTab:CreateSection("manuel give tps")
 
-local Button = combatTab:CreateButton({
-   Name = "kill all gui",
+local Button = gTab:CreateButton({
+   Name = "tp to keycard (only wen on map)(not done)",
    Callback = function()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/ShutUpJamesTheLoserAlt/PrisonLife/refs/heads/main/Killall"))()
-   end
+   -- The function that takes place when the button is pressed
+   end,
 })
-
