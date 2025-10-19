@@ -584,7 +584,7 @@ local character = player.Character or player.CharacterAdded:Wait()
 local hrp = character:WaitForChild("HumanoidRootPart")
 
 -- === HIER DEINE ZIEL-KOORDINATEN EINTRAGEN ===
-local TARGET = Vector3.new(-911, 94, 2051) -- <--- DEINE KOORDINATEN
+local TARGET = Vector3.new(-922, 94, 2051) -- <--- DEINE KOORDINATEN
 -- ==============================================
 
 -- Position merken, wo Skript gestartet wurde
